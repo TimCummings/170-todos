@@ -50,3 +50,10 @@ post '/lists' do
     redirect '/lists'
   end
 end
+
+# view a specific list by id
+get '/lists/:list_id' do
+  list_id = params['list_id'].to_i
+  @list = @lists[list_id]
+  erb :list
+end
