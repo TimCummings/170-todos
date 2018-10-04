@@ -7,8 +7,18 @@ configure do
   set :session_secret, 'secret'
 end
 
+# return an error message if the name is invalid; return nil if name is valid
+def error_for_list_name(name)
+  if !(1..100).cover? name.size
+    'The list name must be between 1 and 100 characters.'
+  elsif @lists.any? { |list| list[:name] == name }
+    'List name must be unique.'
+  end
+end
+
 before do
   session['lists'] ||= []
+  @lists = session['lists']
 end
 
 get '/' do
@@ -29,12 +39,13 @@ end
 # create a new list
 post '/lists' do
   list_name = params['list_name'].strip
-  if (1..100).cover? list_name.size
+
+  if error = error_for_list_name(list_name)
+    session['error'] = error
+    erb :new_list
+  else
     session['lists'] << { name: list_name, todos: [] }
     session['success'] = 'The list has been created.'
     redirect '/lists'
-  else
-    session['error'] = 'The list name must be between 1 and 100 characters.'
-    erb :new_list
   end
 end
