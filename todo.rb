@@ -17,6 +17,12 @@ def error_for_list_name(name)
   end
 end
 
+def error_for_todo_name(name)
+  if !(1..100).cover? name.size
+    'The todo name must be between 1 and 100 characters.'
+  end
+end
+
 before do
   session['lists'] ||= []
   @lists = session['lists']
@@ -28,7 +34,6 @@ end
 
 # view all lists
 get '/lists' do
-  @lists = session['lists']
   erb :lists
 end
 
@@ -39,15 +44,15 @@ end
 
 # create a new list
 post '/lists' do
-  list_name = params['list_name'].strip
+  @list_name = params['list_name'].strip
 
-  error = error_for_list_name(list_name)
+  error = error_for_list_name(@list_name)
   if error
     session['error'] = error
     erb :new_list
   else
-    session['lists'] << { name: list_name, todos: [] }
-    session['success'] = 'The list has been created.'
+    session['lists'] << { name: @list_name, todos: [] }
+    session['success'] = "Created list `#{@list_name}`."
     redirect '/lists'
   end
 end
@@ -95,4 +100,21 @@ post '/lists/:list_id/delete' do
   end
 
   redirect '/lists'
+end
+
+# add a new todo to a list
+post '/lists/:list_id/todos' do
+  @list_id = params['list_id'].to_i
+  @list = @lists[@list_id]
+  todo_name = params['todo'].strip
+
+  error = error_for_todo_name(todo_name)
+  if error
+    session['error'] = error
+    erb :list
+  else
+    @list[:todos] << { name: todo_name, completed: false }
+    session['success'] = "Added todo `#{todo_name}`."
+    redirect "/lists/#{@list_id}"
+  end
 end
