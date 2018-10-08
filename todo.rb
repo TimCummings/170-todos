@@ -54,7 +54,31 @@ end
 
 # view a specific list by id
 get '/lists/:list_id' do
-  list_id = params['list_id'].to_i
-  @list = @lists[list_id]
+  @list_id = params['list_id'].to_i
+  @list = @lists[@list_id]
   erb :list
+end
+
+# render the edit list form
+get '/lists/:list_id/edit' do
+  @list_id = params['list_id'].to_i
+  @list = @lists[@list_id]
+  erb :edit_list
+end
+
+# edit a list by id
+post '/lists/:list_id' do
+  @list_id = params['list_id'].to_i
+  @list = @lists[@list_id]
+  list_name = params['list_name'].strip
+
+  error = error_for_list_name(list_name)
+  if error
+    session['error'] = error
+    erb :edit_list
+  else
+    @lists[@list_id][:name] = list_name
+    session['success'] = 'The list has been updated.'
+    redirect "/lists/#{@list_id}"
+  end
 end
