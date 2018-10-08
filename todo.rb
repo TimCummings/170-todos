@@ -82,3 +82,17 @@ post '/lists/:list_id' do
     redirect "/lists/#{@list_id}"
   end
 end
+
+# delete a list by id
+post '/lists/:list_id/delete' do
+  @list_id = params['list_id'].to_i
+  @list = @lists[@list_id]
+
+  if session['lists'].delete_at(@list_id)
+    session['success'] = "Removed list `#{@list[:name]}`."
+  else
+    session['error'] = 'Unable to locate list.'
+  end
+
+  redirect '/lists'
+end
