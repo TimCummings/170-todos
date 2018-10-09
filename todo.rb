@@ -93,7 +93,7 @@ post '/lists/:list_id/delete' do
   @list_id = params['list_id'].to_i
   @list = @lists[@list_id]
 
-  if session['lists'].delete_at(@list_id)
+  if @lists.delete_at(@list_id)
     session['success'] = "Removed list `#{@list[:name]}`."
   else
     session['error'] = 'Unable to locate list.'
@@ -117,4 +117,20 @@ post '/lists/:list_id/todos' do
     session['success'] = "Added todo `#{todo_name}`."
     redirect "/lists/#{@list_id}"
   end
+end
+
+# delete a todo
+post '/lists/:list_id/todos/:todo_id/delete' do
+  @list_id = params['list_id'].to_i
+  @list = @lists[@list_id]
+  @todo_id = params['todo_id'].to_i
+  @todo = @list[:todos][@todo_id]
+
+  if @list[:todos].delete_at(@todo_id)
+    session['success'] = "Removed todo `#{@todo[:name]}`."
+  else
+    session['error'] = 'Unable to locate todo.'
+  end
+
+  redirect "/lists/#{@list_id}"
 end
