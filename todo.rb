@@ -23,6 +23,24 @@ def error_for_todo_name(name)
   end
 end
 
+helpers do
+  def list_completed?(list)
+    todos_count(list) > 0 && todos_remaining_count(list) == 0
+  end
+
+  def list_class(list)
+    'complete' if list_completed?(list)
+  end
+
+  def todos_count(list)
+    list[:todos].size
+  end
+
+  def todos_remaining_count(list)
+    list[:todos].count { |todo| !todo[:completed] }
+  end
+end
+
 before do
   session['lists'] ||= []
   @lists = session['lists']
