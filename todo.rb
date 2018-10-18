@@ -23,6 +23,10 @@ def error_for_todo_name(name)
   end
 end
 
+def index_collection(collection)
+  collection.map.with_index.to_h
+end
+
 helpers do
   def list_completed?(list)
     todos_count(list) > 0 && todos_remaining_count(list) == 0
@@ -38,6 +42,20 @@ helpers do
 
   def todos_remaining_count(list)
     list[:todos].count { |todo| !todo[:completed] }
+  end
+
+  def sort_lists(lists, &block)
+    completed_lists, uncompleted_lists =
+      index_collection(lists).partition { |list, idx| list_completed?(list) }
+
+    (uncompleted_lists + completed_lists).each(&block)
+  end
+
+  def sorted_todos(todos, &block)
+    completed_todos, uncompleted_todos =
+      index_collection(todos).partition { |todo, idx| todo[:completed] }
+
+    (uncompleted_todos + completed_todos).each(&block)
   end
 end
 
