@@ -6,6 +6,8 @@ require 'tilt/erubis'
 configure do
   enable :sessions
   set :session_secret, 'secret'
+
+  set :erb, :escape_html => true
 end
 
 # return an error message if the name is invalid; return nil if name is valid
