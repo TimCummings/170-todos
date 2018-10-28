@@ -25,6 +25,16 @@ def error_for_todo_name(name)
   end
 end
 
+def load_list(index)
+  list = @lists[index]
+  if list && index
+    list
+  else
+    session['error'] = 'The specified list was not found'
+    redirect '/lists'
+  end
+end
+
 def index_collection(collection)
   collection.map.with_index.to_h
 end
@@ -98,21 +108,21 @@ end
 # view a specific list by id
 get '/lists/:list_id' do
   @list_id = params['list_id'].to_i
-  @list = @lists[@list_id]
+  @list = load_list(@list_id)
   erb :list
 end
 
 # render the edit list form
 get '/lists/:list_id/edit' do
   @list_id = params['list_id'].to_i
-  @list = @lists[@list_id]
+  @list = load_list(@list_id)
   erb :edit_list
 end
 
 # edit a list by id
 post '/lists/:list_id' do
   @list_id = params['list_id'].to_i
-  @list = @lists[@list_id]
+  @list = load_list(@list_id)
   list_name = params['list_name'].strip
 
   error = error_for_list_name(list_name)
@@ -129,7 +139,7 @@ end
 # delete a list by id
 post '/lists/:list_id/delete' do
   @list_id = params['list_id'].to_i
-  @list = @lists[@list_id]
+  @list = load_list(@list_id)
 
   if @lists.delete_at(@list_id)
     session['success'] = "Removed list `#{@list[:name]}`."
@@ -143,7 +153,7 @@ end
 # add a new todo to a list
 post '/lists/:list_id/todos' do
   @list_id = params['list_id'].to_i
-  @list = @lists[@list_id]
+  @list = load_list(@list_id)
   todo_name = params['todo'].strip
 
   error = error_for_todo_name(todo_name)
@@ -160,7 +170,7 @@ end
 # delete a todo
 post '/lists/:list_id/todos/:todo_id/delete' do
   @list_id = params['list_id'].to_i
-  @list = @lists[@list_id]
+  @list = load_list(@list_id)
   @todo_id = params['todo_id'].to_i
   @todo = @list[:todos][@todo_id]
 
@@ -176,7 +186,7 @@ end
 # update the status of a todo
 post '/lists/:list_id/todos/:todo_id' do
   @list_id = params['list_id'].to_i
-  @list = @lists[@list_id]
+  @list = load_list(@list_id)
   @todo_id = params['todo_id'].to_i
   @todo = @list[:todos][@todo_id]
 
@@ -188,7 +198,7 @@ end
 # mark all todos as complete for a list
 post '/lists/:list_id/complete_all' do
   @list_id = params['list_id'].to_i
-  @list = @lists[@list_id]
+  @list = load_list(@list_id)
 
   @list[:todos].each { |todo| todo[:completed] = true }
   session['success'] = 'All todos have been completed.'
