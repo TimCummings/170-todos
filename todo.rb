@@ -25,18 +25,16 @@ def error_for_todo_name(name)
   end
 end
 
-def load_list(index)
-  list = @lists[index]
-  if list && index
-    list
-  else
-    session['error'] = 'The specified list was not found'
-    redirect '/lists'
-  end
+def load_list(id)
+  list = @lists.find { |list| list[:id] == id }
+  return list if list
+
+  session['error'] = 'The specified list was not found.'
+  redirect '/lists'
 end
 
-def next_todo_id(todos)
-  max = todos.map { |todo| todo[:id] }.max || 0
+def next_id(collection)
+  max = collection.map { |member| member[:id] }.max || 0
   max + 1
 end
 
@@ -58,13 +56,11 @@ helpers do
   end
 
   def sort_lists(lists, &block)
-    completed_lists, uncompleted_lists =
-      index_collection(lists).partition { |list, idx| list_completed?(list) }
-
+    completed_lists, uncompleted_lists = lists.partition { |list| list_completed?(list) }
     (uncompleted_lists + completed_lists).each(&block)
   end
 
-  def sorted_todos(todos, &block)
+  def sort_todos(todos, &block)
     completed_todos, uncompleted_todos = todos.partition { |todo| todo[:completed] }
     (uncompleted_todos + completed_todos).each(&block)
   end
@@ -98,7 +94,8 @@ post '/lists' do
     session['error'] = error
     erb :new_list
   else
-    session['lists'] << { name: @list_name, todos: [] }
+    list_id = next_id(@lists)
+    @lists << { id: list_id, name: @list_name, todos: [] }
     session['success'] = "Created list `#{@list_name}`."
     redirect '/lists'
   end
@@ -129,7 +126,7 @@ post '/lists/:list_id' do
     session['error'] = error
     erb :edit_list
   else
-    @lists[@list_id][:name] = list_name
+    @list[:name] = list_name
     session['success'] = 'The list has been updated.'
     redirect "/lists/#{@list_id}"
   end
@@ -140,7 +137,7 @@ post '/lists/:list_id/delete' do
   @list_id = params['list_id'].to_i
   @list = load_list(@list_id)
 
-  @lists.delete_at(@list_id)
+  @lists.delete(@list)
   if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
     '/lists'
   else
@@ -160,7 +157,7 @@ post '/lists/:list_id/todos' do
     session['error'] = error
     erb :list
   else
-    todo_id = next_todo_id(@list[:todos])
+    todo_id = next_id(@list[:todos])
     @list[:todos] << { id: todo_id, name: todo_name, completed: false }
     session['success'] = "Added todo `#{todo_name}`."
     redirect "/lists/#{@list_id}"
