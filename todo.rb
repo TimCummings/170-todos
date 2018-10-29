@@ -35,8 +35,9 @@ def load_list(index)
   end
 end
 
-def index_collection(collection)
-  collection.map.with_index.to_h
+def next_todo_id(todos)
+  max = todos.map { |todo| todo[:id] }.max || 0
+  max + 1
 end
 
 helpers do
@@ -64,9 +65,7 @@ helpers do
   end
 
   def sorted_todos(todos, &block)
-    completed_todos, uncompleted_todos =
-      index_collection(todos).partition { |todo, idx| todo[:completed] }
-
+    completed_todos, uncompleted_todos = todos.partition { |todo| todo[:completed] }
     (uncompleted_todos + completed_todos).each(&block)
   end
 end
@@ -161,7 +160,8 @@ post '/lists/:list_id/todos' do
     session['error'] = error
     erb :list
   else
-    @list[:todos] << { name: todo_name, completed: false }
+    todo_id = next_todo_id(@list[:todos])
+    @list[:todos] << { id: todo_id, name: todo_name, completed: false }
     session['success'] = "Added todo `#{todo_name}`."
     redirect "/lists/#{@list_id}"
   end
@@ -172,9 +172,9 @@ post '/lists/:list_id/todos/:todo_id/delete' do
   @list_id = params['list_id'].to_i
   @list = load_list(@list_id)
   @todo_id = params['todo_id'].to_i
-  @todo = @list[:todos][@todo_id]
+  @todo = @list[:todos].find { |todo| todo[:id] == @todo_id }
 
-  @list[:todos].delete_at(@todo_id)
+  @list[:todos].delete(@todo)
   if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
     status 204
   else
@@ -188,7 +188,7 @@ post '/lists/:list_id/todos/:todo_id' do
   @list_id = params['list_id'].to_i
   @list = load_list(@list_id)
   @todo_id = params['todo_id'].to_i
-  @todo = @list[:todos][@todo_id]
+  @todo = @list[:todos].find { |todo| todo[:id] == @todo_id }
 
   @todo[:completed] = params['completed'] == 'true'
   session['success'] = 'The todo has been updated.'
