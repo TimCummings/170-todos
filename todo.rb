@@ -141,13 +141,13 @@ post '/lists/:list_id/delete' do
   @list_id = params['list_id'].to_i
   @list = load_list(@list_id)
 
-  if @lists.delete_at(@list_id)
-    session['success'] = "Removed list `#{@list[:name]}`."
+  @lists.delete_at(@list_id)
+  if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
+    '/lists'
   else
-    session['error'] = 'Unable to locate list.'
+    session['success'] = "Removed list `#{@list[:name]}`."
+    redirect '/lists'
   end
-
-  redirect '/lists'
 end
 
 # add a new todo to a list
@@ -174,13 +174,13 @@ post '/lists/:list_id/todos/:todo_id/delete' do
   @todo_id = params['todo_id'].to_i
   @todo = @list[:todos][@todo_id]
 
-  if @list[:todos].delete_at(@todo_id)
-    session['success'] = "Removed todo `#{@todo[:name]}`."
+  @list[:todos].delete_at(@todo_id)
+  if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
+    status 204
   else
-    session['error'] = 'Unable to locate todo.'
+    session['success'] = "Removed todo `#{@todo[:name]}`."
+    redirect "/lists/#{@list_id}"
   end
-
-  redirect "/lists/#{@list_id}"
 end
 
 # update the status of a todo
